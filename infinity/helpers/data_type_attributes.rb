@@ -5,7 +5,10 @@
 module Infinity
   module DataTypes
     INT_TYPES = %w(unsigned_64 unsigned_32 unsigned_16 unsigned_8 signed_64 signed_32 signed_16 signed_8)
+    # file structure
     attr_accessor :data_structure
+    # total bytes structure will be
+    attr_accessor :data_size
     
     INT_TYPES.each do |type_name|
       type, size = type_name.split('_')
@@ -46,10 +49,12 @@ module Infinity
       # namespace the attributes
       attribute_name = attr_name(type, name)
       @data_structure ||= []
+      @data_size      ||= 0
 
       # Make sure we don't redefine them
       unless instance_methods.include?(attribute_name.to_sym) && instance_methods.include?("#{attribute_name}=".to_sym)
         @data_structure << {:type => type.to_s, :name => name, :length => length}
+        @data_size += length
         attr_accessor(attribute_name.to_sym)
       end
     end

@@ -114,17 +114,10 @@ module Infinity
   	attr_unsigned_8_int :proficiencies_small_swords
   	attr_unsigned_8_int :proficiencies_bows
   	attr_unsigned_8_int :proficiencies_spears
+  	attr_unsigned_8_int :proficiencies_blunt
+  	attr_unsigned_8_int :proficiencies_spiked
   	attr_unsigned_8_int :proficiencies_axes
   	attr_unsigned_8_int :proficiencies_missiles
-  	attr_unsigned_8_int :proficiencies_great_swords
-  	attr_unsigned_8_int :proficiencies_daggers
-  	attr_unsigned_8_int :proficiencies_halberds
-  	attr_unsigned_8_int :proficiencies_maces
-  	attr_unsigned_8_int :proficiencies_flails
-  	attr_unsigned_8_int :proficiencies_hammers
-  	attr_unsigned_8_int :proficiencies_clubs
-  	attr_unsigned_8_int :proficiencies_quarterstaffs
-  	attr_unsigned_8_int :proficiencies_crossbows
 
   	attr_string :unknown2, :length => 13
   	attr_unsigned_8_int :skill_tracking
@@ -205,7 +198,7 @@ module Infinity
   	attr_string :actor_local, :length => 2
   	attr_string :death_variable, :length => 32 # death var. set SPRITE_IS_DEADvariable on death
     # DWORD, (32bit Integers)/4 bytes each - 44 bytes total
-  	attr_unsigned_32_int :known_spells_offset
+    	attr_unsigned_32_int :known_spells_offset
   	attr_unsigned_32_int :known_spells_count
   	attr_unsigned_32_int :spell_memorization_offset
   	attr_unsigned_32_int :spell_memorization_count
@@ -241,7 +234,7 @@ module Infinity
   	end
     
     def load_known_spells_data
-      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "known_spells_offset"), get_infinity_attr("unsigned_32_int", "known_spells_count"))
+      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "known_spells_offset"), Infinity::SpellBlock.data_size * get_infinity_attr("unsigned_32_int", "known_spells_count"))
       
     end
     
@@ -293,15 +286,14 @@ module Infinity
 	
   end
 
-
-  class SpellBlock
+  class SpellBlock < Infinity::Base
     attr_string :reference_name, :length => 8
     attr_unsigned_16_int :level
     attr_unsigned_16_int :type
   end
 
   # details how many spells the creature can memorize, and how many it has memorized. It consists of an array of entries formatted as follows.
-  class MemorizationInfo
+  class MemorizationInfo < Infinity::Base
     attr_unsigned_16_int :level
     attr_unsigned_16_int :number_memorized
     # Number of spells memorizable (after effects)
@@ -319,7 +311,7 @@ module Infinity
   end
 
   # spell the creature has memorized
-  class MemorizedSpellBlock
+  class MemorizedSpellBlock < Infinity::Base
     attr_string :reference_name, :length => 8
     # 0 - No
     # 1 - Yes
@@ -327,7 +319,7 @@ module Infinity
   end
 
   # items the creature has
-  class ItemBlock
+  class ItemBlock < Infinity::Base
     attr_string :reference_name, :length => 8
     # Item expiration time - item creation hour (replace with drained item)
     attr_unsigned_8_int :expire_time_created_hour
