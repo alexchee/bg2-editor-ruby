@@ -38,7 +38,7 @@ module Infinity
     attr_accessor :creature_data
 
     def self.load_file(file)
-    	if (file=File.open(file,'r'))
+    	if (file=File.open(file,'rb'))
     	  char_data = self.new()
     	  data = file.read
     	  char_data.raw_data = data
@@ -55,56 +55,15 @@ module Infinity
 
     def extract_bytes!
       super
-      puts "self.character_data_offset=#{self.character_data_offset}"
-      puts "self.character_data_length=#{self.character_data_length}"
-      puts "self.raw_data=#{self.raw_data.inspect}"
-      self.creature_data = Infinity::CreatureData.load_data(self.raw_data.byteslice(self.character_data_offset, self.character_data_length))
+      
+      self.creature_data = Infinity::CreatureData.load_data(self.get_offseted_data(get_infinity_attr("unsigned_32_int", "character_data_offset"), get_infinity_attr("unsigned_32_int", "character_data_length")))
     end
     
 
     def write_to_file(path)
       File.open(path, 'wb') do |file|
-        file.write @signature
-        file.write @version
-        file.write @character_name[0...32].ljust(32,"\x00")
-        file.write Array(@character_data_offset).pack('V')
-        file.write Array(@character_data_length).pack('V')
-        file.write Array(@quick_weapon_1_index).pack('v')
-        file.write Array(@quick_weapon_2_index).pack('v')
-        file.write Array(@quick_weapon_3_index).pack('v')
-        file.write Array(@quick_weapon_4_index).pack('v')
-        file.write @quick_spell_1_resource
-        file.write @quick_spell_2_resource
-        file.write @quick_spell_3_resource
-        file.write Array(@quick_item_1_index).pack('v')
-        file.write Array(@quick_item_2_index).pack('v')
-        file.write Array(@quick_item_3_index).pack('v')
-        file.write Array(@show_quick_item_1).pack('v')
-        file.write Array(@show_quick_item_2).pack('v')
-        file.write Array(@show_quick_item_3).pack('v')
-
-        file.write @creature_data
+        file.write(self.data_dump + @creature_data.data_dump)
       end
-    end
-  
-    def name
-    
-    end
-  
-    def name=(new_name)
-    
-    end
-  
-    def get_creature
-    
-    end
-  
-    def last_error
-    
-    end
-  
-    def has_changed?
-    
     end
   end # class Character
 end # module

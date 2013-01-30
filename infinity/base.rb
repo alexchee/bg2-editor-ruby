@@ -5,26 +5,41 @@ module Infinity
     attr_accessor :raw_data
     
     class <<self
-      
     end # class <<self
+    
+    def attr_name(type, name)
+      self.class.attr_name(type, name)
+    end
+
+    def set_infinity_attr(type, name, value)
+      self.class.set_infinity_attr(type, name, value)
+    end
+
+    def get_infinity_attr(type, name)
+      self.class.get_infinity_attr(type, name)
+    end
+    
+    def get_offseted_data(offset, length)
+      self.raw_data.byteslice(offset, length)
+    end
     
     def extract_bytes!
       offset = 0
       self.class.data_structure.each do |data_target|
         if data_target[:type] === "string"
           puts "trying to rip string from #{offset} to #{data_target[:length]} For #{data_target[:name]}"
-          self.send("#{data_target[:name]}=", extract_string(self.raw_data, offset, data_target[:length], data_target[:no_strip]))
+          self.class.set_infinity_attr(data_target[:type], data_target[:name], extract_string(self.raw_data, offset, data_target[:length], data_target[:no_strip]))
         elsif data_target[:type] =~ /^unsigned_[0-9]+_int$/
           puts "trying to rip unsigned from #{offset} to #{data_target[:length]} For #{data_target[:name]}"
-          self.send("#{data_target[:name]}=", extract_unsigned_int(self.raw_data, offset, data_target[:length]))
+          self.class.set_infinity_attr(data_target[:type], data_target[:name], extract_unsigned_int(self.raw_data, offset, data_target[:length]))
         elsif data_target[:type] =~ /^signed_[0-9]+_int$/
           puts "trying to rip signed from #{offset} to #{data_target[:length]} For #{data_target[:name]}"
-          self.send("#{data_target[:name]}=", extract_signed_int(self.raw_data, offset, data_target[:length]))
+          self.class.set_infinity_attr(data_target[:type], data_target[:name], extract_signed_int(self.raw_data, offset, data_target[:length]))
         elsif data_target[:type] == "binary"
           puts "trying to rip binary from #{offset} to #{data_target[:length]} For #{data_target[:name]}"
-          self.send("#{data_target[:name]}=", extract_binary(self.raw_data, offset, data_target[:length]))
+          self.class.set_infinity_attr(data_target[:type], data_target[:name], extract_binary(self.raw_data, offset, data_target[:length]))
         else
-          raise "unknown handled '#{data_target[:type]}'! \n\t #{data_target.inspect}"
+          raise "unhandled type '#{data_target[:type]}'! \n\t #{data_target.inspect}"
         end
         offset += data_target[:length]
       end
@@ -78,6 +93,33 @@ module Infinity
       end
     end
     
+    def write_to_file(path)
+      File.open(path, 'wb') do |file|
+        file.write(data_string)
+      end
+    end
+    
+    def data_dump
+      data_string = ""
+      
+      self.class.data_structure.each do |data_target|
+        if data_target[:type] === "string"
+          data_string += print_string(self.class.get_infinity_attr(data_target[:type], data_target[:name]), data_target[:length])
+        elsif data_target[:type] =~ /^unsigned_[0-9]+_int$/
+          data_string += print_unsigned_int(self.class.get_infinity_attr(data_target[:type], data_target[:name]), data_target[:length])
+        elsif data_target[:type] =~ /^signed_[0-9]+_int$/
+          data_string += print_signed_int(self.class.get_infinity_attr(data_target[:type], data_target[:name]), data_target[:length])
+        elsif data_target[:type] == "binary"
+          data_string += print_binary(self.class.get_infinity_attr(data_target[:type], data_target[:name]), data_target[:length])
+        else
+          raise "unhandled type '#{data_target[:type]}'! \n\t #{data_target.inspect}"
+        end
+      end
+      
+      data_string
+    end
+    
+    
     def print_string(string, max_length)
       string[0...max_length].ljust(max_length,"\x00")
     end
@@ -105,5 +147,11 @@ module Infinity
         Array(number).pack('c')
       end
     end
+    
+    def print_binary(number, length)
+      bits = length*8
+      Array(number).pack("B#{bits}")
+    end
+    
   end
 end

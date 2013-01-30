@@ -29,11 +29,29 @@ module Infinity
       add_to_structure(:binary, name, options[:length])
     end
     
+    def attr_name(type, name)
+      "infinity_#{type}_#{name}"
+    end
+    
+    def set_infinity_attr(type, name, value)
+      instance_variable_set("@#{attr_name(type, name)}", value)
+    end
+
+    def get_infinity_attr(type, name)
+      instance_variable_get("@#{attr_name(type, name)}")
+    end
+    
     private
     def add_to_structure(type, name, length)
+      # namespace the attributes
+      attribute_name = attr_name(type, name)
       @data_structure ||= []
-      @data_structure << {:type => type.to_s, :name => name, :length => length}
-      attr_accessor(name.to_sym)
+
+      # Make sure we don't redefine them
+      unless instance_methods.include?(attribute_name.to_sym) && instance_methods.include?("#{attribute_name}=".to_sym)
+        @data_structure << {:type => type.to_s, :name => name, :length => length}
+        attr_accessor(attribute_name.to_sym)
+      end
     end
     
   end # class

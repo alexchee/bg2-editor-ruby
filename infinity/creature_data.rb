@@ -219,74 +219,129 @@ module Infinity
 
   	attr_string :dialogue_file, :length => 8
     # Lore is calculated as ((level * rate) + int_bonus + wis_bonus). Intelligence and wisdom bonuses are from lorebon.2da and the rate is the lookup value in lore.2da, based on class. For multiclass characters, (level * rate) is calculated for both classes separately and the higher of the two values is used - they are not cumulative.
-	
+	  
+	  attr_accessor :known_spells_data
+	  attr_accessor :memorized_spells_data
+	  attr_accessor :effects_data
+	  attr_accessor :items_data
+	  attr_accessor :inventory_data
+	  
   	def self.load_data(data, offset=0)
   	  creature_data = self.new()
   	  creature_data.raw_data =  data[offset..-1]
   	  creature_data.extract_bytes!
       
-      # offset = 0
-      # chunk = 0
-      # creature_data.signature = data.byteslice(offset,chunk=4)
-      # creature_data.version = data.byteslice(offset+=chunk,chunk=4)
-      # creature_data.long_name_ref = data.byteslice(offset+=chunk,chunk=4)
-      # creature_data.short_name_ref = data.byteslice(offset+=chunk,chunk=4)
-      #       creature_data.creature_flags = data.byteslice(offset+=chunk,chunk=4)
-      #       creature_data.xp_reward = data.byteslice(offset+=chunk,chunk=4).unpack("V").first
-      #       creature_data.xp_or_power_level = data.byteslice(offset+=chunk,chunk=4).unpack("V").first
-      #       creature_data.gold = data.byteslice(offset+=chunk,chunk=4).unpack("V").first
-      #       creature_data.permanent_status_flags = data.byteslice(offset+=chunk,chunk=4).unpack("V").first
-      #       creature_data.current_hp = data.byteslice(offset+=chunk,chunk=2).unpack("S").first
-      #       creature_data.max_hp  = data.byteslice(offset+=chunk,chunk=2).unpack("S").first
-      #       creature_data.animation_id = data.byteslice(offset+=chunk,chunk=2).unpack("S").first
-      #       creature_data.unknown1 = data.byteslice(offset+=chunk,chunk=2)
-      #       creature_data.color_metal = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_minor = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_major = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_skin = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_leather = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_armor = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.color_hair = data.byteslice(offset+=chunk,chunk=1).unpack("c").first
-      #       creature_data.eff_version = data.byteslice(offset+=chunk,chunk=1)
-      #       creature_data.small_portrait = data.byteslice(offset+=chunk,chunk=8).strip
-      #       creature_data.large_portrait = data.byteslice(offset+=chunk,chunk=8).strip
-      #       creature_data.reputation = data.byteslice(offset+=chunk,chunk=1).unpack('c').first
-      #       creature_data.skill_hide_in_shadows_base = data.byteslice(offset+=chunk,chunk=1).unpack('C').first
-      #       creature_data.ac_base = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       creature_data.ac_effective = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       creature_data.ac_mod_crushing = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       creature_data.ac_mod_missile = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       creature_data.ac_mod_piercing = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       creature_data.ac_mod_slashing = data.byteslice(offset+=chunk,chunk=2).unpack('s').first
-      #       
-      #       
+      creature_data.load_known_spells_data
+      creature_data.load_memorized_spells_data
+      creature_data.load_items_data
+      creature_data.load_effects_data
+      creature_data.load_inventory_data
+      
     	creature_data
   	end
-
-    # def to_s
-    #   
-    # end
     
-    def dump_to_file(file_path)
+    def load_known_spells_data
+      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "known_spells_offset"), get_infinity_attr("unsigned_32_int", "known_spells_count"))
       
     end
     
+    def load_memorized_spells_data
+      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "memorized_spells_offset"), get_infinity_attr("unsigned_32_int", "memorized_spells_count"))
+      
+    end
+    
+    def load_items_data
+      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "items_offset"), get_infinity_attr("unsigned_32_int", "items_count"))
+      
+    end
+    
+    def load_effects_data
+      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "effects_offset"), get_infinity_attr("unsigned_32_int", "effects_count"))
+      
+    end
+    
+    # 40 slots
+    # * Helmet
+    # * Armor
+    # * Shield
+    # * Gloves
+    # * L.Ring
+    # * R.Ring
+    # * Amulet
+    # * Belt
+    # * Boots
+    # * Weapon 1
+    # * Weapon 2
+    # * Weapon 3
+    # * Weapon 4
+    # * Quiver 1
+    # * Quiver 2
+    # * Quiver 3
+    # * ?
+    # * Cloak
+    # * Quick item 1
+    # * Quick item 2
+    # * Quick item 3
+    # * Inventory item (1 to 16)
+    # * Magic weapon
+    # * Selected weapon
+    # * Selected weapon ability
+    # Each entry will be either 0xFFFF ("empty") or an index into the Items table. Selected is a dword indicating which weapon slot us currently selected. Values are from slots.ids - 35, with 1000 meaning "fist".
+    def load_inventory_data
+      
+    end
 	
   end
 
 
   class SpellBlock
-    # 8 bytes
-    attr_accessor :chSpellName
-    # WORD - 2 bytes
-    attr_accessor :wSpellLevel
-    # WORD - 2 bytes
-    attr_accessor :wSpellType
-  
-    def load(data, offset=0)
-      @chSpellName = data[offset,8]
-      @wSpellLevel = data[offset+8,2]
-      @wSpellType = data[offset+2,2]
-    end
+    attr_string :reference_name, :length => 8
+    attr_unsigned_16_int :level
+    attr_unsigned_16_int :type
+  end
+
+  # details how many spells the creature can memorize, and how many it has memorized. It consists of an array of entries formatted as follows.
+  class MemorizationInfo
+    attr_unsigned_16_int :level
+    attr_unsigned_16_int :number_memorized
+    # Number of spells memorizable (after effects)
+    attr_unsigned_16_int :number_memorized_affected
+    # 0 - Priest
+    # 1 - Wizard
+    # 2 - Innate
+    attr_unsigned_16_int :spell_type
+    # Index into memorized spells array of first memorized spell of this type in this level.
+    attr_unsigned_32_int :memorized_spell_index
+    # Count of memorized spell entries in memorized spells array of memorized spells of this type in this level.
+    attr_unsigned_32_int :memorized_spell_count
+    
+    
+  end
+
+  # spell the creature has memorized
+  class MemorizedSpellBlock
+    attr_string :reference_name, :length => 8
+    # 0 - No
+    # 1 - Yes
+    attr_unsigned_16_int :memorized
+  end
+
+  # items the creature has
+  class ItemBlock
+    attr_string :reference_name, :length => 8
+    # Item expiration time - item creation hour (replace with drained item)
+    attr_unsigned_8_int :expire_time_created_hour
+    # Item expiration time - (elapsed hour count divided by 256, rounded down) + 1 (replace with drained item)
+    # When the game hour and elapsed hour count for the current game time exceed these values, the item is removed.
+    attr_unsigned_8_int :expire_time_elapsed_hour
+    attr_unsigned_16_int :qty_or_charges1
+    attr_unsigned_16_int :qty_or_charges2
+    attr_unsigned_16_int :qty_or_charges3
+    # Item flags
+    # bit 0: Identified
+    # bit 1: Unstealable
+    # bit 2: Stolen
+    # bit 3: Undroppable
+    attr_unsigned_32_int :flags
   end
 end
