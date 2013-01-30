@@ -234,7 +234,14 @@ module Infinity
   	end
     
     def load_known_spells_data
-      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "known_spells_offset"), Infinity::SpellBlock.data_size * get_infinity_attr("unsigned_32_int", "known_spells_count"))
+      @known_spells_data = []
+      offset = get_infinity_attr("unsigned_32_int", "known_spells_offset")
+      count = get_infinity_attr("unsigned_32_int", "known_spells_count")
+      1.upto(count) do |num|
+        @known_spells_data << SpellBlock.create_from_data(self.raw_data, offset, Infinity::SpellBlock.data_size)
+        offset += Infinity::SpellBlock.data_size
+      end
+      
       
     end
     

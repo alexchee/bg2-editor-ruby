@@ -5,6 +5,12 @@ module Infinity
     attr_accessor :raw_data
     
     class <<self
+      def create_from_data(data, offset = 0, length = -1)
+        new_base = new
+        new_base.raw_data = data.byteslice(offset, length)
+        new_base.extract_bytes!
+        new_base
+      end
     end # class <<self
     
     def attr_name(type, name)
