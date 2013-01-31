@@ -59,6 +59,11 @@ module Infinity
       self.creature_data = Infinity::CreatureData.load_data(self.get_offseted_data(get_infinity_attr("unsigned_32_int", "character_data_offset"), get_infinity_attr("unsigned_32_int", "character_data_length")))
     end
     
+    def data_dump
+      data_string = super
+      data_string += creature_data.data_dump
+    end
+    
 
     def write_to_file(path)
       File.open(path, 'wb') do |file|

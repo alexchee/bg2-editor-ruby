@@ -204,7 +204,7 @@ module Infinity
   	attr_unsigned_32_int :spell_memorization_count
   	attr_unsigned_32_int :memorized_spells_offset
   	attr_unsigned_32_int :memorized_spells_count
-  	attr_unsigned_32_int :item_slots_offset
+  	attr_unsigned_32_int :inventory_offset
   	attr_unsigned_32_int :items_offset
   	attr_unsigned_32_int :items_count
   	attr_unsigned_32_int :effects_offset
@@ -215,9 +215,53 @@ module Infinity
 	  
 	  attr_accessor :known_spells_data
 	  attr_accessor :memorized_spells_data
+	  attr_accessor :memorized_spells_table_data
 	  attr_accessor :effects_data
 	  attr_accessor :items_data
 	  attr_accessor :inventory_data
+	  INVENTORY = {
+      :helmet                  => 0,
+      :armor                   => 1,
+      :shield                  => 2,
+      :gloves                  => 3,
+      :left_ring               => 4,
+      :right_ring              => 5,
+      :amulet                  => 6,
+      :belt                    => 7,
+      :boots                   => 8,
+      :weapon1                 => 9,
+      :weapon2                 => 10,
+      :weapon3                 => 11,
+      :weapon4                 => 12,
+      :quiver1                 => 13,
+      :quiver2                 => 14,
+      :quiver3                 => 15,
+      :unknown                 => 16,
+      :cloak                   => 17,
+      :quick_item1             => 18,
+      :quick_item2             => 19,
+      :quick_item3             => 20,
+      :inventory1              => 21,
+      :inventory2              => 22,
+      :inventory3              => 23,
+      :inventory4              => 24,
+      :inventory5              => 25,
+      :inventory6              => 27,
+      :inventory7              => 28,
+      :inventory8              => 29,
+      :inventory9              => 30,
+      :inventory10             => 31,
+      :inventory11             => 32,
+      :inventory12             => 33,
+      :inventory13             => 34,
+      :inventory14             => 35,
+      :inventory15             => 36,
+      :inventory16             => 37,
+      :magic_weapon            => 38,
+      :selected_weapon         => 39,
+      :selected_weapon_ability => 40
+
+    }
 	  
   	def self.load_data(data, offset=0)
   	  creature_data = self.new()
@@ -234,29 +278,32 @@ module Infinity
   	end
     
     def load_known_spells_data
-      @known_spells_data = []
-      offset = get_infinity_attr("unsigned_32_int", "known_spells_offset")
-      count = get_infinity_attr("unsigned_32_int", "known_spells_count")
-      1.upto(count) do |num|
-        @known_spells_data << SpellBlock.create_from_data(self.raw_data, offset, Infinity::SpellBlock.data_size)
-        offset += Infinity::SpellBlock.data_size
-      end
-      
-      
+      @known_spells_data = get_array_of_object(Infinity::SpellBlock, get_infinity_attr("unsigned_32_int", "known_spells_offset"), get_infinity_attr("unsigned_32_int", "known_spells_count"))
     end
     
     def load_memorized_spells_data
-      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "memorized_spells_offset"), get_infinity_attr("unsigned_32_int", "memorized_spells_count"))
-      
+      offset = get_infinity_attr("unsigned_32_int", "memorized_spells_offset")
+      count = get_infinity_attr("unsigned_32_int", "memorized_spells_count")
+      @memorized_spells_data = get_array_of_object(Infinity::MemorizationInfo, offset, count)
+      offset += count*Infinity::MemorizationInfo.data_size
+      @memorized_spells_table_data = get_array_of_object(Infinity::MemorizedSpellBlock, offset, count)
     end
     
     def load_items_data
-      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "items_offset"), get_infinity_attr("unsigned_32_int", "items_count"))
-      
+      offset = get_infinity_attr("unsigned_32_int", "items_offset")
+      count = get_infinity_attr("unsigned_32_int", "items_count")
+      @items_data = get_array_of_object(Infinity::ItemBlock, offset, count)
     end
     
     def load_effects_data
-      data = get_offseted_data(get_infinity_attr("unsigned_32_int", "effects_offset"), get_infinity_attr("unsigned_32_int", "effects_count"))
+      @effects_data = []
+      count = get_infinity_attr("unsigned_32_int", "effects_count")
+      offset = get_infinity_attr("unsigned_32_int", "effects_offset")
+      bytes = 4
+      1.upto(count) do |num|
+        @effects_data << extract_string(self.raw_data, offset, bytes, false)
+        offset += bytes
+      end
       
     end
     
@@ -286,12 +333,36 @@ module Infinity
     # * Magic weapon
     # * Selected weapon
     # * Selected weapon ability
-    # Each entry will be either 0xFFFF ("empty") or an index into the Items table. Selected is a dword indicating which weapon slot us currently selected. Values are from slots.ids - 35, with 1000 meaning "fist".
+    # Each entry will be either (0xFFFF = 65535) ("empty") or an index into the Items table. Selected is a dword indicating which weapon slot us currently selected. Values are from slots.ids - 35, with 1000 meaning "fist".
     def load_inventory_data
+      offset = get_infinity_attr("unsigned_32_int", "inventory_offset")
+      bytes = 2
+      count = 40
       
+      @inventory_data = []
+      1.upto(count) do |num|
+        @inventory_data << extract_string(self.raw_data, offset, bytes, false)
+        offset += bytes
+      end
     end
 	
-  end
+	  def data_dump
+	    data_string = super
+	    data_string += @known_spells_data.map(&:data_dump).join('')
+
+      data_string += @memorized_spells_data.map(&:data_dump).join('')
+
+      data_string += @memorized_spells_table_data.map(&:data_dump).join('')
+
+      data_string += @effects_data.join('')
+
+      data_string += @items_data.map(&:data_dump).join('')
+
+      data_string += @inventory_data.join('')
+	  end
+	  
+	
+  end # class CreatureData
 
   class SpellBlock < Infinity::Base
     attr_string :reference_name, :length => 8

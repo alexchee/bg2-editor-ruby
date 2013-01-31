@@ -29,6 +29,17 @@ module Infinity
       self.raw_data.byteslice(offset, length)
     end
     
+    def get_array_of_object(klass, offset, length)
+      objects=[]
+      1.upto(length) do |num|
+        objects << klass.create_from_data(self.raw_data, offset, klass.data_size)
+        offset += klass.data_size
+      end
+      
+      objects
+    end
+    
+    
     def extract_bytes!
       offset = 0
       self.class.data_structure.each do |data_target|
